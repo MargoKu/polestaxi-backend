@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package polestaxi.wallet.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Wallet.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service WalletService {
+  // Internal: User Service on registration.
+  rpc CreateWallet(CreateWalletRequest) returns (WalletResponse);
+
+  rpc GetMine(GetWalletRequest) returns (WalletResponse) {
+    option (google.api.http) = { get: "/v1/wallets/me" };
+  }
+
+  // Internal: Order Service — immediate debit; rollback on cancel.
+  rpc Debit(MoneyRequest) returns (TransactionResponse);
+  rpc Credit(MoneyRequest) returns (TransactionResponse);
+
+  rpc ListTransactions(ListTransactionsRequest) returns (ListTransactionsResponse) {
+    option (google.api.http) = { get: "/v1/wallets/me/transactions" };
+  }
+}
+
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  TRANSACTION_TYPE_DEBIT = 1;
+  TRANSACTION_TYPE_CREDIT = 2;
+  TRANSACTION_TYPE_REFUND = 3;
+}
+
+enum TransactionStatus {
+  TRANSACTION_STATUS_UNSPECIFIED = 0;
+  TRANSACTION_STATUS_PENDING = 1;
+  TRANSACTION_STATUS_COMPLETED = 2;
+  TRANSACTION_STATUS_FAILED = 3;
+  TRANSACTION_STATUS_ROLLED_BACK = 4;
+}
+
+message CreateWalletRequest {
+  string user_id = 1;
+  string currency = 2;
+}
+
+message GetWalletRequest {}
+
+message MoneyRequest {
+  string user_id = 1;
+  string order_id = 2;
+  double amount = 3;
+  string idempotency_key = 4;
+}
+
+message WalletResponse {
+  string id = 1;
+  string user_id = 2;
+  double balance = 3;
+  string currency = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message TransactionResponse {
+  string id = 1;
+  string wallet_id = 2;
+  TransactionType type = 3;
+  double amount = 4;
+  TransactionStatus status = 5;
+  string order_id = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ListTransactionsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListTransactionsResponse {
+  repeated TransactionResponse items = 1;
+  string next_page_token = 2;
+}
+
+// Insufficient funds → CONFLICT. Duplicate idempotency_key → same transaction.

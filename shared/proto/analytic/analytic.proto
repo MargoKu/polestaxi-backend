@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package polestaxi.analytic.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Analytic.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// HTTP: Analyst or Admin (Gateway RBAC).
+service AnalyticService {
+  rpc GetOrderStats(StatsRangeRequest) returns (OrderStatsResponse) {
+    option (google.api.http) = { get: "/v1/analytics/orders" };
+  }
+
+  rpc GetRatingStats(StatsRangeRequest) returns (RatingStatsResponse) {
+    option (google.api.http) = { get: "/v1/analytics/ratings" };
+  }
+
+  rpc GetDashboard(StatsRangeRequest) returns (DashboardResponse) {
+    option (google.api.http) = { get: "/v1/analytics/dashboard" };
+  }
+}
+
+message StatsRangeRequest {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+}
+
+message OrderStatsResponse {
+  int64 total_orders = 1;
+  int64 completed = 2;
+  int64 cancelled = 3;
+  double average_price = 4;
+  double average_distance_meters = 5;
+}
+
+message RatingStatsResponse {
+  double average_driver_rating = 1;
+  double average_user_rating = 2;
+  int64 rated_trips = 3;
+}
+
+message DashboardResponse {
+  OrderStatsResponse orders = 1;
+  RatingStatsResponse ratings = 2;
+  int64 active_users = 3;
+  int64 available_drivers = 4;
+}

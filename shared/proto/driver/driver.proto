@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package polestaxi.driver.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Driver.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service DriverService {
+  // Internal: User Service on role DRIVER. Default status OFFLINE.
+  rpc Register(RegisterDriverRequest) returns (DriverResponse);
+
+  rpc GetMe(google.protobuf.Empty) returns (DriverResponse) {
+    option (google.api.http) = { get: "/v1/drivers/me" };
+  }
+
+  rpc UpdateMe(UpdateDriverRequest) returns (DriverResponse) {
+    option (google.api.http) = {
+      put: "/v1/drivers/me"
+      body: "*"
+    };
+  }
+
+  rpc SetStatus(SetStatusRequest) returns (DriverResponse) {
+    option (google.api.http) = {
+      patch: "/v1/drivers/me/status"
+      body: "*"
+    };
+  }
+
+  // Internal: Order Service. Illegal transitions → CONFLICT.
+  rpc AcceptTrip(TripActionRequest) returns (google.protobuf.Empty);
+  rpc DeclineTrip(TripActionRequest) returns (google.protobuf.Empty);
+  rpc StartTrip(TripActionRequest) returns (google.protobuf.Empty);
+  rpc CompleteTrip(TripActionRequest) returns (google.protobuf.Empty);
+
+  rpc FindAvailable(FindAvailableRequest) returns (FindAvailableResponse);
+}
+
+enum TaxiType {
+  TAXI_TYPE_UNSPECIFIED = 0;
+  TAXI_TYPE_ECONOMY = 1;
+  TAXI_TYPE_COMFORT = 2;
+  TAXI_TYPE_BUSINESS = 3;
+}
+
+enum DriverStatus {
+  DRIVER_STATUS_UNSPECIFIED = 0;
+  DRIVER_STATUS_OFFLINE = 1;
+  DRIVER_STATUS_AVAILABLE = 2;
+  DRIVER_STATUS_ON_TRIP = 3;
+}
+
+message GeoPoint {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message RegisterDriverRequest {
+  string user_id = 1;
+  TaxiType taxi_type = 2;
+  string license_plate = 3;
+}
+
+message UpdateDriverRequest {
+  TaxiType taxi_type = 1;
+  string license_plate = 2;
+  GeoPoint location = 3;
+}
+
+message SetStatusRequest {
+  DriverStatus status = 1;
+}
+
+message TripActionRequest {
+  string order_id = 1;
+  string user_id = 2;
+}
+
+message FindAvailableRequest {
+  TaxiType taxi_type = 1;
+  GeoPoint near = 2;
+  int32 limit = 3;
+}
+
+message FindAvailableResponse {
+  repeated DriverResponse drivers = 1;
+}
+
+message DriverResponse {
+  string id = 1;
+  string user_id = 2;
+  TaxiType taxi_type = 3;
+  string license_plate = 4;
+  DriverStatus status = 5;
+  GeoPoint location = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Duplicate user_id on Register → CONFLICT.
+// Forbidden: OFFLINE → ON_TRIP → CONFLICT.

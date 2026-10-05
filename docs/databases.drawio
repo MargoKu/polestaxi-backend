@@ -1,0 +1,34 @@
+<mxfile host="app.diagrams.net" modified="2026-08-22T13:00:00.000Z" agent="PolesTaxi" version="22.0.0">
+  <diagram id="db" name="Databases">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="u" value="User MongoDB.users&#10;_id PK&#10;name, phone UQ, email UQ&#10;passwordHash&#10;roles[] User|Driver|Analyst|Admin&#10;rating, recentRatings[20]&#10;isDeleted, createdAt, updatedAt" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=0;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="280" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="d" value="Driver MongoDB.drivers&#10;_id PK&#10;userId UQ (логич. FK User)&#10;taxiType Economy|Comfort|Business&#10;licensePlate&#10;status offline|available|on-trip&#10;location GeoJSON 2dsphere&#10;createdAt, updatedAt&#10;НЕТ password/email" style="whiteSpace=wrap;html=1;align=left;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="a" value="Auth Redis&#10;access:{jti} TTL 15-30m&#10;refresh:{jti} TTL 7-30d&#10;value: userId, roles[]" style="whiteSpace=wrap;html=1;align=left;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="700" y="40" width="240" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="o" value="Order Elasticsearch orders&#10;id PK, userId, driverId?&#10;taxiType, status&#10;created → driver_assigned → in_progress → completed|cancelled&#10;pickup, dropoff, route&#10;distanceMeters, durationSeconds&#10;price, surge&#10;userRating, driverRating, comment&#10;timestamps&#10;Redis cache order:{id}" style="whiteSpace=wrap;html=1;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="360" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="w" value="Wallet PostgreSQL&#10;wallets(id PK, user_id UQ, balance&gt;=0, currency, created_at)&#10;transactions(id PK, wallet_id FK, type debit|credit|refund, amount&gt;0, status pending|completed|failed|rolled_back, order_id, created_at)" style="whiteSpace=wrap;html=1;align=left;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="440" y="260" width="400" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="an" value="Analytic ClickHouse&#10;user_registered(user_id, role, event_time)&#10;order_completed(order_id, user_id, driver_id, taxi_type, price, distance, event_time)&#10;trip_rated(order_id, from_role, score, event_time)" style="whiteSpace=wrap;html=1;align=left;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="880" y="260" width="420" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="n" value="Нет JOIN между сервисами. userId копируется как идентификатор, не FK БД." style="text;html=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="520" width="520" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rel" value="логич. userId" style="endArrow=open;html=1;dashed=1;" edge="1" parent="1" source="d" target="u">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
