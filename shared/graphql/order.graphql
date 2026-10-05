@@ -1,0 +1,91 @@
+# GraphQL — Order Service
+
+Сложные выборки истории и поиска (роль Analyst — фильтры шире). Мутации дублируют REST из `order.proto`; клиент может пользоваться любым транспортом.
+
+```graphql
+scalar DateTime
+
+enum TaxiType {
+  ECONOMY
+  COMFORT
+  BUSINESS
+}
+
+enum OrderStatus {
+  CREATED
+  DRIVER_ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+type Location {
+  latitude: Float!
+  longitude: Float!
+  address: String
+}
+
+type Order {
+  id: ID!
+  userId: ID!
+  driverId: ID
+  taxiType: TaxiType!
+  status: OrderStatus!
+  pickup: Location!
+  dropoff: Location!
+  distanceMeters: Int
+  durationSeconds: Int
+  price: Float
+  surge: Float
+  userRating: Int
+  driverRating: Int
+  comment: String
+  createdAt: DateTime!
+  assignedAt: DateTime
+  startedAt: DateTime
+  finishedAt: DateTime
+}
+
+type OrderConnection {
+  nodes: [Order!]!
+  nextPageToken: String
+}
+
+input OrderFilter {
+  status: OrderStatus
+  taxiType: TaxiType
+  userId: ID
+  driverId: ID
+  createdFrom: DateTime
+  createdTo: DateTime
+}
+
+type Query {
+  order(id: ID!): Order
+  orders(filter: OrderFilter, pageSize: Int = 20, pageToken: String): OrderConnection!
+}
+
+input CreateOrderInput {
+  pickup: LocationInput!
+  dropoff: LocationInput!
+  taxiType: TaxiType!
+}
+
+input LocationInput {
+  latitude: Float!
+  longitude: Float!
+  address: String
+}
+
+input RateOrderInput {
+  id: ID!
+  score: Int!
+  comment: String
+}
+
+type Mutation {
+  createOrder(input: CreateOrderInput!): Order!
+  cancelOrder(id: ID!): Order!
+  rateOrder(input: RateOrderInput!): Order!
+}
+```

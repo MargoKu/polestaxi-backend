@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package polestaxi.events.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Events.V1";
+
+import "google/protobuf/timestamp.proto";
+import "user/user.proto";
+import "driver/driver.proto";
+import "order/order.proto";
+
+// Topics: user.registered, driver.registered, order.status_changed,
+// payment.completed, trip.rated. Payload = protobuf bytes. At-least-once:
+// consumers must be idempotent (фаза реализации).
+
+message UserRegisteredEvent {
+  string user_id = 1;
+  polestaxi.user.v1.Role role = 2;
+  google.protobuf.Timestamp occurred_at = 3;
+}
+
+message DriverRegisteredEvent {
+  string user_id = 1;
+  string driver_id = 2;
+  polestaxi.driver.v1.TaxiType taxi_type = 3;
+  google.protobuf.Timestamp occurred_at = 4;
+}
+
+message OrderStatusChangedEvent {
+  string order_id = 1;
+  string user_id = 2;
+  string driver_id = 3;
+  polestaxi.order.v1.OrderStatus from_status = 4;
+  polestaxi.order.v1.OrderStatus to_status = 5;
+  google.protobuf.Timestamp occurred_at = 6;
+}
+
+message PaymentCompletedEvent {
+  string order_id = 1;
+  string user_id = 2;
+  string transaction_id = 3;
+  double amount = 4;
+  bool is_refund = 5;
+  google.protobuf.Timestamp occurred_at = 6;
+}
+
+message TripRatedEvent {
+  string order_id = 1;
+  string from_user_id = 2;
+  polestaxi.user.v1.Role from_role = 3;
+  int32 score = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}

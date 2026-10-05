@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: PolesTaxi HTTP API
+  version: 1.0.0
+  description: |
+    Публичный HTTP-слой. Контракт канонически задан в `shared/proto` (`google.api.http`).
+    Ошибки: `{ "code", "message" }` — см. ERRORS.md.
+    Аутентификация: Bearer access JWT, кроме register/login/refresh.
+servers:
+  - url: https://api.polestaxi.local
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Drivers
+  - name: Orders
+  - name: Wallets
+  - name: Analytics
+
+paths:
+  /v1/users/register:
+    post:
+      tags: [Users]
+      security: []
+      summary: Регистрация (роли User или Driver)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /v1/users/me:
+    get:
+      tags: [Users]
+      summary: Профиль текущего пользователя
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+          description: OK
+        "401": { $ref: "#/components/responses/Error" }
+    put:
+      tags: [Users]
+      summary: Обновить name, phone, email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "409": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Users]
+      summary: Soft-delete
+      responses:
+        "200": { description: OK }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /v1/users/me/password:
+    put:
+      tags: [Users]
+      summary: Смена пароля
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordRequest"
+      responses:
+        "200": { description: OK }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /v1/users/me/rating:
+    get:
+      tags: [Users]
+      summary: Рейтинг по последним 20 поездкам
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+
+  /v1/users/{userId}/roles:
+    post:
+      tags: [Users]
+      summary: Admin — выдать роль (Analyst)
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "403": { $ref: "#/components/responses/Error" }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Пара JWT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPairResponse"
+        "401": { $ref: "#/components/responses/Error" }
+
+  /v1/auth/refresh:
+    post:
+      tags: [Auth]
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Новая пара токенов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenPairResponse"
+        "401": { $ref: "#/components/responses/Error" }
+
+  /v1/auth/logout:
+    post:
+      tags: [Auth]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogoutRequest"
+      responses:
+        "200": { description: Сессия сброшена }
+
+  /v1/drivers/me:
+    get:
+      tags: [Drivers]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverResponse"
+    put:
+      tags: [Drivers]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDriverRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverResponse"
+
+  /v1/drivers/me/status:
+    patch:
+      tags: [Drivers]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetStatusRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DriverResponse"
+        "409": { $ref: "#/components/responses/Error" }
+
+  /v1/orders:
+    post:
+      tags: [Orders]
+      summary: Создать заказ (роль User)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+    get:
+      tags: [Orders]
+      summary: История / поиск
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: page_size
+          schema: { type: integer }
+        - in: query
+          name: page_token
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrdersResponse"
+
+  /v1/orders/{id}:
+    get:
+      tags: [Orders]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "404": { $ref: "#/components/responses/Error" }
+
+  /v1/orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+
+  /v1/orders/{id}/rate:
+    post:
+      tags: [Orders]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateOrderRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+        "400": { $ref: "#/components/responses/Error" }
+
+  /v1/wallets/me:
+    get:
+      tags: [Wallets]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+
+  /v1/wallets/me/transactions:
+    get:
+      tags: [Wallets]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTransactionsResponse"
+
+  /v1/analytics/orders:
+    get:
+      tags: [Analytics]
+      summary: Analyst
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderStatsResponse"
+        "403": { $ref: "#/components/responses/Error" }
+
+  /v1/analytics/ratings:
+    get:
+      tags: [Analytics]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RatingStatsResponse"
+
+  /v1/analytics/dashboard:
+    get:
+      tags: [Analytics]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Error:
+      description: Ошибка
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, enum: [VALIDATION, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, INTERNAL] }
+        message: { type: string }
+    RegisterRequest:
+      type: object
+      required: [name, phone, email, password, role]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        phone: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        role: { type: string, enum: [ROLE_USER, ROLE_DRIVER] }
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string, format: email }
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string }
+        new_password: { type: string, minLength: 8 }
+    AssignRoleRequest:
+      type: object
+      properties:
+        role: { type: string, enum: [ROLE_ANALYST] }
+    UserResponse:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        roles: { type: array, items: { type: string } }
+        rating: { type: number }
+        is_deleted: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    RatingResponse:
+      type: object
+      properties:
+        rating: { type: number }
+        recent_ratings: { type: array, items: { type: number } }
+    LoginRequest:
+      type: object
+      required: [login, password]
+      properties:
+        login: { type: string, description: email or phone }
+        password: { type: string }
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token: { type: string }
+    LogoutRequest:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+    TokenPairResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        access_expires_in_seconds: { type: integer }
+        refresh_expires_in_seconds: { type: integer }
+    DriverResponse:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        taxi_type: { type: string, enum: [TAXI_TYPE_ECONOMY, TAXI_TYPE_COMFORT, TAXI_TYPE_BUSINESS] }
+        license_plate: { type: string }
+        status: { type: string, enum: [DRIVER_STATUS_OFFLINE, DRIVER_STATUS_AVAILABLE, DRIVER_STATUS_ON_TRIP] }
+        location:
+          type: object
+          properties:
+            latitude: { type: number }
+            longitude: { type: number }
+    UpdateDriverRequest:
+      type: object
+      properties:
+        taxi_type: { type: string }
+        license_plate: { type: string }
+        location:
+          type: object
+          properties:
+            latitude: { type: number }
+            longitude: { type: number }
+    SetStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [DRIVER_STATUS_OFFLINE, DRIVER_STATUS_AVAILABLE, DRIVER_STATUS_ON_TRIP] }
+    CreateOrderRequest:
+      type: object
+      required: [pickup, dropoff, taxi_type]
+      properties:
+        pickup: { $ref: "#/components/schemas/Location" }
+        dropoff: { $ref: "#/components/schemas/Location" }
+        taxi_type: { type: string }
+    Location:
+      type: object
+      properties:
+        latitude: { type: number }
+        longitude: { type: number }
+        address: { type: string }
+    OrderResponse:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        driver_id: { type: string }
+        taxi_type: { type: string }
+        status: { type: string }
+        pickup: { $ref: "#/components/schemas/Location" }
+        dropoff: { $ref: "#/components/schemas/Location" }
+        distance_meters: { type: integer }
+        duration_seconds: { type: integer }
+        price: { type: number }
+        surge: { type: number }
+        user_rating: { type: integer }
+        driver_rating: { type: integer }
+        comment: { type: string }
+    ListOrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items: { $ref: "#/components/schemas/OrderResponse" }
+        next_page_token: { type: string }
+    RateOrderRequest:
+      type: object
+      required: [score]
+      properties:
+        score: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string }
+    WalletResponse:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        balance: { type: number }
+        currency: { type: string }
+    ListTransactionsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              type: { type: string }
+              amount: { type: number }
+              status: { type: string }
+              order_id: { type: string }
+        next_page_token: { type: string }
+    OrderStatsResponse:
+      type: object
+      properties:
+        total_orders: { type: integer }
+        completed: { type: integer }
+        cancelled: { type: integer }
+        average_price: { type: number }
+    RatingStatsResponse:
+      type: object
+      properties:
+        average_driver_rating: { type: number }
+        average_user_rating: { type: number }
+        rated_trips: { type: integer }
+    DashboardResponse:
+      type: object
+      properties:
+        orders: { $ref: "#/components/schemas/OrderStatsResponse" }
+        ratings: { $ref: "#/components/schemas/RatingStatsResponse" }
+        active_users: { type: integer }
+        available_drivers: { type: integer }
