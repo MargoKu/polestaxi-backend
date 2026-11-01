@@ -15,6 +15,7 @@ public sealed class OrderStoreFixture : IAsyncLifetime
 {
     public ElasticsearchContainer Elastic { get; } = new ElasticsearchBuilder()
         .WithImage("docker.elastic.co/elasticsearch/elasticsearch:8.19.6")
+        .WithEnvironment("xpack.security.enabled", "false")
         .Build();
     public RedisContainer Redis { get; } = new RedisBuilder().WithImage("redis:7.0").Build();
 
@@ -29,15 +30,20 @@ public sealed class OrderElasticRepositoryTests : IClassFixture<OrderStoreFixtur
 
     public OrderElasticRepositoryTests(OrderStoreFixture fx) => _fx = fx;
 
-    private async Task<OrderElasticRepository> Repo()
-    {
-        _n++;
-        var index = $"orders_{_n}_{Guid.NewGuid():N}";
-        var elastic = await ElasticStore.New(_fx.Elastic.GetConnectionString(), index, CancellationToken.None);
-        var redis = await RedisClient.New(_fx.Redis.GetConnectionString(), CancellationToken.None);
-        var cache = new OrderRedisCache(redis.Database, TimeSpan.FromMinutes(5));
-        return new OrderElasticRepository(elastic.Client, elastic.IndexName, cache);
-    }
+private async Task<OrderElasticRepository> Repo()
+{
+    _n++;
+    var index = $"orders_{_n}_{Guid.NewGuid():N}";
+
+    var containerUri = new Uri(_fx.Elastic.GetConnectionString());
+    var elasticUri = $"http://127.0.0.1:{containerUri.Port}";
+
+    var elastic = await ElasticStore.New(elasticUri, index, CancellationToken.None);
+    var redis = await RedisClient.New(_fx.Redis.GetConnectionString(), CancellationToken.None);
+    var cache = new OrderRedisCache(redis.Database, TimeSpan.FromMinutes(5));
+
+    return new OrderElasticRepository(elastic.Client, elastic.IndexName, cache);
+}
 
     private static Order NewOrder(string statusUser, OrderStatus status) => new()
     {
