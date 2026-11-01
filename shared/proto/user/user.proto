@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package polestaxi.user.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.User.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// User Service: accounts, credentials, roles, rating.
+service UserService {
+  rpc Register(RegisterRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/register"
+      body: "*"
+    };
+  }
+
+  // Internal: Auth Service login. No HTTP annotation.
+  rpc VerifyCredentials(VerifyCredentialsRequest) returns (VerifyCredentialsResponse);
+
+  rpc GetMe(google.protobuf.Empty) returns (UserResponse) {
+    option (google.api.http) = { get: "/v1/users/me" };
+  }
+
+  rpc UpdateMe(UpdateProfileRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      put: "/v1/users/me"
+      body: "*"
+    };
+  }
+
+  rpc ChangePassword(ChangePasswordRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/v1/users/me/password"
+      body: "*"
+    };
+  }
+
+  rpc DeleteMe(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/v1/users/me" };
+  }
+
+  // Admin: assign Analyst (or other extra roles). Registration roles stay User|Driver.
+  rpc AssignRole(AssignRoleRequest) returns (UserResponse) {
+    option (google.api.http) = {
+      post: "/v1/users/{user_id}/roles"
+      body: "*"
+    };
+  }
+
+  rpc GetRating(google.protobuf.Empty) returns (RatingResponse) {
+    option (google.api.http) = { get: "/v1/users/me/rating" };
+  }
+}
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_USER = 1;
+  ROLE_DRIVER = 2;
+  ROLE_ANALYST = 3;
+  ROLE_ADMIN = 4;
+}
+
+message RegisterRequest {
+  string name = 1;
+  string phone = 2;
+  string email = 3;
+  string password = 4;
+  // Only ROLE_USER or ROLE_DRIVER.
+  Role role = 5;
+}
+
+message VerifyCredentialsRequest {
+  // email or phone
+  string login = 1;
+  string password = 2;
+}
+
+message VerifyCredentialsResponse {
+  string user_id = 1;
+  repeated Role roles = 2;
+}
+
+message UpdateProfileRequest {
+  string name = 1;
+  string phone = 2;
+  string email = 3;
+}
+
+message ChangePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+
+message AssignRoleRequest {
+  string user_id = 1;
+  Role role = 2;
+}
+
+message UserResponse {
+  string id = 1;
+  string name = 2;
+  string phone = 3;
+  string email = 4;
+  repeated Role roles = 5;
+  double rating = 6;
+  bool is_deleted = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message RatingResponse {
+  double rating = 1;
+  repeated double recent_ratings = 2;
+}
+
+// Validation (OpenAPI / handlers):
+// - name: 1-100 chars
+// - phone: E.164-like, unique
+// - email: RFC email, unique
+// - password: min 8
+// - Register.role: USER or DRIVER only → VALIDATION otherwise
+// - duplicate email/phone → CONFLICT
+// - not found / soft-deleted → NOT_FOUND

@@ -1,0 +1,25 @@
+<mxfile host="app.diagrams.net" modified="2026-08-22T13:00:00.000Z" agent="PolesTaxi" version="22.0.0">
+  <diagram id="auth" name="Auth flows">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t1" value="Registration&#10;1 Gateway → User.Register&#10;2 hash password, roles User|Driver&#10;3 gRPC Driver.Register если Driver (fail = нет половины)&#10;4 gRPC Wallet.CreateWallet&#10;5 Kafka user.registered" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="420" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="Login&#10;1 Client → Auth.Login&#10;2 Auth gRPC User.VerifyCredentials&#10;3 access JWT 15-30m (userId, roles) + refresh 7-30d&#10;4 оба токена в Redis&#10;5 клиенту пара токенов" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="400" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="Request authentication&#10;1 Authorization: Bearer access&#10;2 Gateway → Auth.ValidateToken (подпись, exp, Redis)&#10;3 Gateway RBAC → прокси в сервис&#10;4 сервис без повторной проверки JWT" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="40" y="220" width="420" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="t4" value="Refresh&#10;1 POST /v1/auth/refresh&#10;2 проверка refresh (подпись, exp, Redis)&#10;3 новая пара access+refresh, старые jti удаляются" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="500" y="220" width="400" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="t5" value="Logout&#10;1 POST /v1/auth/logout (access + refresh)&#10;2 удаление ключей Redis&#10;3 оба токена сразу недействительны" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="40" y="390" width="420" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

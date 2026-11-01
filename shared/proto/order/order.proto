@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package polestaxi.order.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Order.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "driver/driver.proto";
+
+service OrderService {
+  rpc Create(CreateOrderRequest) returns (OrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders"
+      body: "*"
+    };
+  }
+
+  rpc Get(GetOrderRequest) returns (OrderResponse) {
+    option (google.api.http) = { get: "/v1/orders/{id}" };
+  }
+
+  rpc List(ListOrdersRequest) returns (ListOrdersResponse) {
+    option (google.api.http) = { get: "/v1/orders" };
+  }
+
+  rpc Cancel(GetOrderRequest) returns (OrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders/{id}/cancel"
+      body: "*"
+    };
+  }
+
+  rpc Rate(RateOrderRequest) returns (OrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders/{id}/rate"
+      body: "*"
+    };
+  }
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_CREATED = 1;
+  ORDER_STATUS_DRIVER_ASSIGNED = 2;
+  ORDER_STATUS_IN_PROGRESS = 3;
+  ORDER_STATUS_COMPLETED = 4;
+  ORDER_STATUS_CANCELLED = 5;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  string address = 3;
+}
+
+message CreateOrderRequest {
+  Location pickup = 1;
+  Location dropoff = 2;
+  polestaxi.driver.v1.TaxiType taxi_type = 3;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message ListOrdersRequest {
+  OrderStatus status = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListOrdersResponse {
+  repeated OrderResponse orders = 1;
+  string next_page_token = 2;
+}
+
+message RateOrderRequest {
+  string id = 1;
+  int32 score = 2;
+  string comment = 3;
+}
+
+message OrderResponse {
+  string id = 1;
+  string user_id = 2;
+  string driver_id = 3;
+  polestaxi.driver.v1.TaxiType taxi_type = 4;
+  OrderStatus status = 5;
+  Location pickup = 6;
+  Location dropoff = 7;
+  int64 distance_meters = 8;
+  int64 duration_seconds = 9;
+  double price = 10;
+  double surge = 11;
+  int32 user_rating = 12;
+  int32 driver_rating = 13;
+  string comment = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp assigned_at = 16;
+  google.protobuf.Timestamp started_at = 17;
+  google.protobuf.Timestamp finished_at = 18;
+}
+
+// Create: role User only. Rate: score 1-5, status must be COMPLETED.
+// Cancel: compensatory Wallet refund. Pricing: distance, time, taxi_type, surge.

@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package polestaxi.auth.v1;
+
+option csharp_namespace = "PolesTaxi.Contracts.Auth.V1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "user/user.proto";
+
+service AuthService {
+  rpc Login(LoginRequest) returns (TokenPairResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  rpc Refresh(RefreshRequest) returns (TokenPairResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  rpc Logout(LogoutRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/auth/logout"
+      body: "*"
+    };
+  }
+
+  // Internal: Gateway. Signature + exp + Redis.
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message LogoutRequest {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message TokenPairResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 access_expires_in_seconds = 3;
+  int32 refresh_expires_in_seconds = 4;
+}
+
+message ValidateTokenRequest {
+  string access_token = 1;
+}
+
+message ValidateTokenResponse {
+  string user_id = 1;
+  repeated polestaxi.user.v1.Role roles = 2;
+}
+
+// Errors: UNAUTHORIZED invalid/expired/revoked; VALIDATION empty fields.
+// Access TTL 15-30 min, refresh 7-30 days. Both stored in Redis by jti.
