@@ -1,5 +1,3 @@
 # Wallet Service
 
-Хранилище: **PostgreSQL + Redis**. Слои — как в `docs/ARCHITECTURE.md`.
-
-Эта фаза: только каркас. Реализация repository — со 2-й фазы; User+Auth первыми.
+Хранилище: **PostgreSQL** (FluentMigrator + Dapper, транзакции Start/Finish/Abort) и Redis-кэш последних операций.

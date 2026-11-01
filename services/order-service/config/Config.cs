@@ -1,16 +1,15 @@
 namespace PolesTaxi.OrderService.Config;
 
-public sealed class Config
+public sealed class AppConfig
 {
-    public string HttpAddr { get; init; } = "http://localhost:8080";
-    public string GrpcAddr { get; init; } = "localhost:9090";
+    public string ElasticsearchUri { get; init; } = "http://127.0.0.1:9200";
+    public string IndexName { get; init; } = "orders";
+    public string RedisConnection { get; init; } = "127.0.0.1:6379";
 
-    public static Config FromEnvironment()
+    public static AppConfig FromEnvironment() => new()
     {
-        return new Config
-        {
-            HttpAddr = Environment.GetEnvironmentVariable("HTTP_ADDR") ?? "http://localhost:8080",
-            GrpcAddr = Environment.GetEnvironmentVariable("GRPC_ADDR") ?? "localhost:9090",
-        };
-    }
+        ElasticsearchUri = Environment.GetEnvironmentVariable("ELASTICSEARCH_URI") ?? "http://127.0.0.1:9200",
+        IndexName = Environment.GetEnvironmentVariable("ELASTICSEARCH_INDEX") ?? "orders",
+        RedisConnection = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "127.0.0.1:6379"
+    };
 }

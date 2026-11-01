@@ -1,16 +1,15 @@
 namespace PolesTaxi.WalletService.Config;
 
-public sealed class Config
+public sealed class AppConfig
 {
-    public string HttpAddr { get; init; } = "http://localhost:8080";
-    public string GrpcAddr { get; init; } = "localhost:9090";
+    public string PostgresConnection { get; init; } =
+        "Host=127.0.0.1;Port=5432;Database=polestaxi_wallet;Username=polestaxi;Password=polestaxi";
+    public string RedisConnection { get; init; } = "127.0.0.1:6379";
 
-    public static Config FromEnvironment()
+    public static AppConfig FromEnvironment() => new()
     {
-        return new Config
-        {
-            HttpAddr = Environment.GetEnvironmentVariable("HTTP_ADDR") ?? "http://localhost:8080",
-            GrpcAddr = Environment.GetEnvironmentVariable("GRPC_ADDR") ?? "localhost:9090",
-        };
-    }
+        PostgresConnection = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION")
+            ?? "Host=127.0.0.1;Port=5432;Database=polestaxi_wallet;Username=polestaxi;Password=polestaxi",
+        RedisConnection = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? "127.0.0.1:6379"
+    };
 }

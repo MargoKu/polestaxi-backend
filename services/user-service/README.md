@@ -1,5 +1,5 @@
 # User Service
 
-Хранилище: **MongoDB**. Слои — как в `docs/ARCHITECTURE.md`.
+Хранилище: **MongoDB** `polestaxi_users`. Data layer (фаза 2): `repository/mongo`, индексы в `MongoClient.New()`.
 
-Эта фаза: только каркас. Реализация repository — со 2-й фазы; User+Auth первыми.
+`SEED=true` — админ `admin@polestaxi.local`. HTTP/JWT — следующие фазы.

@@ -6,7 +6,11 @@
     <Nullable>enable</Nullable>
     <RootNamespace>PolesTaxi.AnalyticService</RootNamespace>
     <AssemblyName>PolesTaxi.AnalyticService</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ClickHouse.Client" Version="7.9.1" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\PolesTaxi.Shared\PolesTaxi.Shared.csproj" />
   </ItemGroup>

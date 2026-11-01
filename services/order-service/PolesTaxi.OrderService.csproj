@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <RootNamespace>PolesTaxi.OrderService</RootNamespace>
     <AssemblyName>PolesTaxi.OrderService</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.15.10" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\PolesTaxi.Shared\PolesTaxi.Shared.csproj" />
   </ItemGroup>

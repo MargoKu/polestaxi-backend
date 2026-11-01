@@ -1,5 +1,3 @@
 # Auth Service
 
-Хранилище: **Redis**. Слои — как в `docs/ARCHITECTURE.md`.
-
-Эта фаза: только каркас. Реализация repository — со 2-й фазы; User+Auth первыми.
+Хранилище: **Redis**. Data layer хранит payload по `access:{jti}` и `refresh:{jti}` с TTL. Выдача JWT — следующая фаза.

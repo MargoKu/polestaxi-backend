@@ -40,3 +40,4 @@ Desktop.ini
 
 # Generated protobuf (source .proto is tracked)
 **/obj/
+.env
