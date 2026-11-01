@@ -6,7 +6,11 @@
     <Nullable>enable</Nullable>
     <RootNamespace>PolesTaxi.UserService</RootNamespace>
     <AssemblyName>PolesTaxi.UserService</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\shared\PolesTaxi.Shared\PolesTaxi.Shared.csproj" />
   </ItemGroup>

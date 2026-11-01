@@ -1,16 +1,13 @@
 namespace PolesTaxi.DriverService.Config;
 
-public sealed class Config
+public sealed class AppConfig
 {
-    public string HttpAddr { get; init; } = "http://localhost:8080";
-    public string GrpcAddr { get; init; } = "localhost:9090";
+    public string MongoConnection { get; init; } = "mongodb://127.0.0.1:27017";
+    public string MongoDatabase { get; init; } = "polestaxi_drivers";
 
-    public static Config FromEnvironment()
+    public static AppConfig FromEnvironment() => new()
     {
-        return new Config
-        {
-            HttpAddr = Environment.GetEnvironmentVariable("HTTP_ADDR") ?? "http://localhost:8080",
-            GrpcAddr = Environment.GetEnvironmentVariable("GRPC_ADDR") ?? "localhost:9090",
-        };
-    }
+        MongoConnection = Environment.GetEnvironmentVariable("MONGO_CONNECTION") ?? "mongodb://127.0.0.1:27017",
+        MongoDatabase = Environment.GetEnvironmentVariable("MONGO_DRIVER_DATABASE") ?? "polestaxi_drivers"
+    };
 }

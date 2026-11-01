@@ -1,5 +1,3 @@
 # Driver Service
 
-Хранилище: **MongoDB**. Слои — как в `docs/ARCHITECTURE.md`.
-
-Эта фаза: только каркас. Реализация repository — со 2-й фазы; User+Auth первыми.
+Хранилище: **MongoDB** `polestaxi_drivers`. Unique `userId`, geo-индекс, статус. Переходы статусов — в service (следующая фаза).

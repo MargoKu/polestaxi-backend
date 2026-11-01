@@ -1,16 +1,12 @@
 namespace PolesTaxi.AnalyticService.Config;
 
-public sealed class Config
+public sealed class AppConfig
 {
-    public string HttpAddr { get; init; } = "http://localhost:8080";
-    public string GrpcAddr { get; init; } = "localhost:9090";
+    public string ClickHouseConnection { get; init; } = "Host=127.0.0.1;Port=8123;Database=default";
 
-    public static Config FromEnvironment()
+    public static AppConfig FromEnvironment() => new()
     {
-        return new Config
-        {
-            HttpAddr = Environment.GetEnvironmentVariable("HTTP_ADDR") ?? "http://localhost:8080",
-            GrpcAddr = Environment.GetEnvironmentVariable("GRPC_ADDR") ?? "localhost:9090",
-        };
-    }
+        ClickHouseConnection = Environment.GetEnvironmentVariable("CLICKHOUSE_CONNECTION")
+            ?? "Host=127.0.0.1;Port=8123;Database=default"
+    };
 }

@@ -1,12 +1,47 @@
+using PolesTaxi.WalletService.App.Db.Pg;
+using PolesTaxi.WalletService.App.Db.Redis;
+using PolesTaxi.WalletService.Config;
+using PolesTaxi.WalletService.Repository.Pg;
+using PolesTaxi.WalletService.Repository.Redis;
+
 namespace PolesTaxi.WalletService.App;
 
-/// <summary>Composition root. Wiring and servers — later phases.</summary>
 public static class Run
 {
-    public static Task<int> ExecuteAsync(string[] args)
+    public static async Task<int> ExecuteAsync(string[] args)
     {
         _ = args;
-        Console.WriteLine("PolesTaxi.WalletService skeleton (phase 1: no HTTP/gRPC yet)");
-        return Task.FromResult(0);
+        var config = AppConfig.FromEnvironment();
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            cts.Cancel();
+        };
+
+        try
+        {
+            using var pg = PgClient.New(config.PostgresConnection);
+            Console.WriteLine("postgres ready");
+            using var redis = await RedisClient.New(config.RedisConnection, cts.Token);
+            var cache = new TransactionRedisCache(redis.Database);
+            _ = new WalletPgRepository(pg.DataSource, cache);
+            Console.WriteLine("redis ready");
+            try
+            {
+                await Task.Delay(Timeout.Infinite, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"wallet store init failed: {ex.Message}");
+            return 1;
+        }
+
+        Console.WriteLine("shutdown");
+        return 0;
     }
 }
